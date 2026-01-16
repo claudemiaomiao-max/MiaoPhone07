@@ -2578,6 +2578,170 @@
             border-radius: 4px;
         }
 
+        /* 拍一拍系统消息 */
+        .wechat-system-msg {
+            text-align: center;
+            margin: 12px 0;
+        }
+        .wechat-system-msg span {
+            font-size: 12px;
+            color: #999;
+            background: transparent;
+        }
+
+        /* 加号展开面板 */
+        .wechat-plus-panel {
+            display: none;
+            background: #f7f7f7;
+            border-top: 1px solid #e0e0e0;
+            padding: 15px 10px;
+        }
+        .wechat-plus-panel.show {
+            display: block;
+        }
+        .wechat-plus-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px 10px;
+        }
+        .wechat-plus-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+        .wechat-plus-item:active {
+            opacity: 0.7;
+        }
+        .wechat-plus-icon {
+            width: 50px;
+            height: 50px;
+            background: #fff;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .wechat-plus-item span {
+            font-size: 11px;
+            color: #666;
+        }
+        .wechat-plus-btn {
+            background: none;
+            border: none;
+            padding: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+        }
+        .wechat-plus-btn.active svg {
+            transform: rotate(45deg);
+        }
+        .wechat-plus-btn svg {
+            transition: transform 0.2s;
+        }
+
+        /* 弹窗样式 */
+        .wechat-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .wechat-modal-overlay.show {
+            display: flex;
+        }
+        .wechat-modal {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            width: 280px;
+            max-width: 90%;
+        }
+        .wechat-modal-title {
+            font-size: 16px;
+            font-weight: 500;
+            text-align: center;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .wechat-modal-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        .wechat-modal-input:focus {
+            outline: none;
+            border-color: #07c160;
+        }
+        .wechat-modal-btns {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .wechat-modal-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .wechat-modal-btn.cancel {
+            background: #f5f5f5;
+            color: #666;
+        }
+        .wechat-modal-btn.confirm {
+            background: #07c160;
+            color: #fff;
+        }
+
+        /* 转账卡片样式 */
+        .wechat-transfer-card {
+            background: linear-gradient(135deg, #ffa726, #ff9800);
+            border-radius: 8px;
+            padding: 12px;
+            color: #fff;
+            min-width: 180px;
+        }
+        .wechat-transfer-title {
+            font-size: 14px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .wechat-transfer-amount {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .wechat-transfer-note {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-top: 6px;
+            border-top: 1px solid rgba(255,255,255,0.3);
+            padding-top: 6px;
+        }
+        .wechat-transfer-status {
+            font-size: 11px;
+            opacity: 0.8;
+            margin-top: 4px;
+        }
+
         /* 微信聊天设置页 */
         .wechat-settings-section {
             background: #fff;
@@ -3019,9 +3183,46 @@
             </div>
             <div class="wechat-input-area">
                 <div class="file-preview-area" id="wechatFilePreviewArea"></div>
+                <!-- 功能展开面板 -->
+                <div class="wechat-plus-panel" id="wechatPlusPanel">
+                    <div class="wechat-plus-grid">
+                        <div class="wechat-plus-item" onclick="wechatSelectPhoto()">
+                            <div class="wechat-plus-icon">🖼️</div>
+                            <span>照片</span>
+                        </div>
+                        <div class="wechat-plus-item" onclick="wechatTakePhoto()">
+                            <div class="wechat-plus-icon">📷</div>
+                            <span>拍摄</span>
+                        </div>
+                        <div class="wechat-plus-item" onclick="showComingSoon()">
+                            <div class="wechat-plus-icon">📍</div>
+                            <span>位置</span>
+                        </div>
+                        <div class="wechat-plus-item" onclick="showComingSoon()">
+                            <div class="wechat-plus-icon">🎤</div>
+                            <span>语音输入</span>
+                        </div>
+                        <div class="wechat-plus-item" onclick="wechatSelectFile()">
+                            <div class="wechat-plus-icon">📁</div>
+                            <span>文件</span>
+                        </div>
+                        <div class="wechat-plus-item" onclick="showComingSoon()">
+                            <div class="wechat-plus-icon">🎵</div>
+                            <span>音乐</span>
+                        </div>
+                        <div class="wechat-plus-item" onclick="openPokeModal()">
+                            <div class="wechat-plus-icon">👋</div>
+                            <span>拍一拍</span>
+                        </div>
+                        <div class="wechat-plus-item" onclick="openTransferModal()">
+                            <div class="wechat-plus-icon">💰</div>
+                            <span>转账</span>
+                        </div>
+                    </div>
+                </div>
                 <div class="wechat-input-row">
                     <div class="wechat-input-box">
-                        <button class="wechat-upload-btn" onclick="showUploadOptions('wechat')" title="添加文件">
+                        <button class="wechat-plus-btn" onclick="toggleWechatPlusPanel()" title="更多功能">
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
                         </button>
                         <textarea id="wechatInput" placeholder="输入消息..." rows="1"></textarea>
@@ -3034,6 +3235,31 @@
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                         </button>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 拍一拍弹窗 -->
+        <div class="wechat-modal-overlay" id="pokeModalOverlay" onclick="closePokeModal()">
+            <div class="wechat-modal" onclick="event.stopPropagation()">
+                <div class="wechat-modal-title">你拍了拍「<span id="pokeTargetName">对方</span>」</div>
+                <input type="text" class="wechat-modal-input" id="pokeSuffixInput" placeholder="（可选）输入后缀" maxlength="20">
+                <div class="wechat-modal-btns">
+                    <button class="wechat-modal-btn cancel" onclick="closePokeModal()">取消</button>
+                    <button class="wechat-modal-btn confirm" onclick="confirmPoke()">确定</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 转账弹窗 -->
+        <div class="wechat-modal-overlay" id="transferModalOverlay" onclick="closeTransferModal()">
+            <div class="wechat-modal" onclick="event.stopPropagation()">
+                <div class="wechat-modal-title">转账给「<span id="transferTargetName">对方</span>」</div>
+                <input type="number" class="wechat-modal-input" id="transferAmountInput" placeholder="输入金额" min="0" step="0.01">
+                <input type="text" class="wechat-modal-input" id="transferNoteInput" placeholder="（可选）添加备注" maxlength="20" style="margin-top: 10px;">
+                <div class="wechat-modal-btns">
+                    <button class="wechat-modal-btn cancel" onclick="closeTransferModal()">取消</button>
+                    <button class="wechat-modal-btn confirm" onclick="confirmTransfer()">确定</button>
                 </div>
             </div>
         </div>
@@ -5558,6 +5784,41 @@
                 </div>
             `;
             
+            // 拍一拍消息
+            if (msg.type === 'pat_message' || msg.type === 'system') {
+                return `<div class="wechat-system-msg"><span>${escapeHtml(msg.content)}</span></div>`;
+            }
+
+            // 转账消息
+            if (msg.type === 'transfer') {
+                const statusText = msg.status === 'accepted' ? '已收款' :
+                                   msg.status === 'declined' ? '已退还' : '待确认';
+                const isSentByUser = msg.role === 'user' || msg.senderName === '我';
+                const displayTime = typeof msg.timestamp === 'number'
+                    ? formatTime(new Date(msg.timestamp).toISOString())
+                    : formatTime(msg.timestamp);
+                return `
+                    <div class="wechat-msg ${isSentByUser ? 'user' : 'assistant'}" ${bubbleClass} data-msg-id="${msg.id}">
+                        <div class="wechat-msg-avatar">
+                            ${isSentByUser
+                                ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'
+                                : (assistant?.avatar ? `<img src="${assistant.avatar}" alt="">` : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>')
+                            }
+                        </div>
+                        <div class="wechat-msg-body">
+                            <div class="wechat-transfer-card">
+                                <div class="wechat-transfer-title">💰 转账给 ${msg.receiverName || '对方'}</div>
+                                <div class="wechat-transfer-amount">¥${msg.amount?.toFixed(2) || '0.00'}</div>
+                                ${msg.note ? `<div class="wechat-transfer-note">${escapeHtml(msg.note)}</div>` : ''}
+                                <div class="wechat-transfer-status">${statusText}</div>
+                            </div>
+                            <div class="wechat-msg-time">${displayTime}</div>
+                            ${actionBtns}
+                        </div>
+                    </div>
+                `;
+            }
+
             if (msg.type === 'voice_message') {
                 const duration = Math.max(1, Math.ceil((msg.content || '').length / 4));
                 // 根据秒数决定长度样式
@@ -5641,6 +5902,132 @@
             } else {
                 return `${date.getMonth() + 1}月${date.getDate()}日`;
             }
+        }
+
+        // ========== 加号展开面板功能 ==========
+        function toggleWechatPlusPanel() {
+            const panel = document.getElementById('wechatPlusPanel');
+            const btn = document.querySelector('.wechat-plus-btn');
+            panel.classList.toggle('show');
+            btn.classList.toggle('active');
+        }
+
+        function closeWechatPlusPanel() {
+            const panel = document.getElementById('wechatPlusPanel');
+            const btn = document.querySelector('.wechat-plus-btn');
+            panel.classList.remove('show');
+            btn.classList.remove('active');
+        }
+
+        // 照片选择
+        function wechatSelectPhoto() {
+            closeWechatPlusPanel();
+            selectImage();
+        }
+
+        // 拍摄
+        function wechatTakePhoto() {
+            closeWechatPlusPanel();
+            capturePhoto();
+        }
+
+        // 文件选择
+        function wechatSelectFile() {
+            closeWechatPlusPanel();
+            selectFile();
+        }
+
+        // ========== 拍一拍功能 ==========
+        let pendingPokeMessage = null;  // 暂存的拍一拍消息
+
+        function openPokeModal() {
+            closeWechatPlusPanel();
+            const assistant = appData.assistants.find(a => a.id === wechatData.currentAssistantId);
+            if (!assistant) return;
+
+            document.getElementById('pokeTargetName').textContent = assistant.name || '对方';
+            document.getElementById('pokeSuffixInput').value = '';
+            document.getElementById('pokeModalOverlay').classList.add('show');
+        }
+
+        function closePokeModal() {
+            document.getElementById('pokeModalOverlay').classList.remove('show');
+        }
+
+        function confirmPoke() {
+            const assistant = appData.assistants.find(a => a.id === wechatData.currentAssistantId);
+            if (!assistant) return;
+
+            const suffix = document.getElementById('pokeSuffixInput').value.trim();
+            const assistantName = assistant.name || '对方';
+
+            // 构建拍一拍消息内容（格式：我 拍了拍 小克 的后缀）
+            let pokeContent = `我 拍了拍 ${assistantName}`;
+            if (suffix) {
+                pokeContent += ` ${suffix}`;
+            }
+
+            // 创建暂存消息（使用 pat_message 类型）
+            pendingPokeMessage = {
+                id: 'poke_' + Date.now(),
+                role: 'system',
+                type: 'pat_message',
+                content: pokeContent,
+                timestamp: Date.now()
+            };
+
+            // 添加到暂存消息列表
+            wechatData.pendingMessages.push(pendingPokeMessage);
+
+            closePokeModal();
+            renderWechatMessages();
+        }
+
+        // ========== 转账功能 ==========
+        function openTransferModal() {
+            closeWechatPlusPanel();
+            const assistant = appData.assistants.find(a => a.id === wechatData.currentAssistantId);
+            if (!assistant) return;
+
+            document.getElementById('transferTargetName').textContent = assistant.name || '对方';
+            document.getElementById('transferAmountInput').value = '';
+            document.getElementById('transferNoteInput').value = '';
+            document.getElementById('transferModalOverlay').classList.add('show');
+        }
+
+        function closeTransferModal() {
+            document.getElementById('transferModalOverlay').classList.remove('show');
+        }
+
+        function confirmTransfer() {
+            const amount = parseFloat(document.getElementById('transferAmountInput').value);
+            if (!amount || amount <= 0) {
+                alert('请输入有效金额');
+                return;
+            }
+
+            const note = document.getElementById('transferNoteInput').value.trim();
+            const assistant = appData.assistants.find(a => a.id === wechatData.currentAssistantId);
+            const assistantName = assistant?.name || '对方';
+
+            // 创建转账消息（兼容Ephone格式）
+            const transferMsg = {
+                id: 'transfer_' + Date.now(),
+                role: 'user',
+                type: 'transfer',
+                senderName: '我',
+                receiverName: assistantName,
+                amount: amount,
+                note: note || '',
+                status: 'pending',  // pending/accepted/declined
+                timestamp: Date.now()
+            };
+
+            // 添加到暂存消息
+            wechatData.pendingMessages.push(transferMsg);
+
+            closeTransferModal();
+            renderWechatMessages();
         }
 
         function wechatHoldMessage() {
