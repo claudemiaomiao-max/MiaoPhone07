@@ -6077,6 +6077,7 @@ type可以是"text"(文字)或"voice_message"(语音)，你自由选择。
 
         function parseAndAddWechatReplies(content, conv) {
             let replies = [];
+            let prefixText = ''; // JSON前的多余文字
 
             // 尝试解析JSON数组
             try {
@@ -6097,6 +6098,15 @@ type可以是"text"(文字)或"voice_message"(语音)，你自由选择。
                     replies = JSON.parse(trimmed);
                 } else {
                     // 从文本中找JSON数组（兜底：万一AI在前面加了废话）
+                    // 找到 [ 的位置，提取前面的文字
+                    const jsonStartIndex = trimmed.indexOf('[');
+                    if (jsonStartIndex > 0) {
+                        prefixText = trimmed.substring(0, jsonStartIndex).trim();
+                        if (prefixText) {
+                            console.log('检测到JSON前的多余文字:', prefixText);
+                        }
+                    }
+
                     // 使用更精确的匹配：找以[开头、以]结尾的最外层数组
                     const match = trimmed.match(/\[[\s\S]*?\](?=\s*$|\s*```)/);
                     if (match) {
@@ -6108,6 +6118,12 @@ type可以是"text"(文字)或"voice_message"(语音)，你自由选择。
                             replies = JSON.parse(match2[0]);
                         }
                     }
+                }
+
+                // 如果有前缀文字，作为第一条消息插入
+                if (prefixText && replies.length > 0) {
+                    replies.unshift({ type: 'text', content: prefixText });
+                    console.log('已将多余文字作为第一条消息添加');
                 }
 
                 if (replies.length > 0) {
@@ -6261,6 +6277,24 @@ type可以是"text"(文字)或"voice_message"(语音)，你自由选择。
         let currentTtsAudio = null;
         // TTS缓存，避免重复收费
         const ttsCache = new Map();
+        // 音频是否已解锁（移动端需要用户交互后才能播放音频）
+        let audioUnlocked = false;
+
+        // 解锁音频（在首次用户交互时调用）
+        function unlockAudio() {
+            if (audioUnlocked) return;
+            // 创建并播放一个静音音频来解锁
+            const silentAudio = new Audio('data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAAYYoRwmHAAAAAAD/+9DEAAAIAANIAAAAgAADSAAAAATEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//tQxBkAAADSAAAAAAAAANIAAAAA//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////8=');
+            silentAudio.volume = 0.01;
+            silentAudio.play().then(() => {
+                audioUnlocked = true;
+                console.log('音频已解锁');
+            }).catch(() => {});
+        }
+
+        // 在页面首次点击/触摸时解锁音频
+        document.addEventListener('click', unlockAudio, { once: true });
+        document.addEventListener('touchstart', unlockAudio, { once: true });
 
         // ==================== 语音活人感增强 ====================
         // 情绪参数映射（绝对值，emotion固定传neutral保持声线一致）
@@ -6426,6 +6460,22 @@ type可以是"text"(文字)或"voice_message"(语音)，你自由选择。
             
             const cacheKey = `${voiceId}|${tts.model}|${emotion}|${text}`;
             
+            // 安全播放函数（处理移动端首次播放限制）
+            async function safePlay(audio) {
+                try {
+                    await audio.play();
+                } catch (e) {
+                    if (e.name === 'NotAllowedError') {
+                        // 移动端首次播放被阻止，等待100ms后重试
+                        console.warn('首次播放被阻止，尝试重试...');
+                        await new Promise(r => setTimeout(r, 100));
+                        await audio.play();
+                    } else {
+                        throw e;
+                    }
+                }
+            }
+
             // 先检查缓存
             if (ttsCache.has(cacheKey)) {
                 const cachedUrl = ttsCache.get(cacheKey);
@@ -6436,7 +6486,7 @@ type可以是"text"(文字)或"voice_message"(语音)，你自由选择。
                 currentTtsAudio = new Audio(cachedUrl);
                 if (onStart) onStart();
                 currentTtsAudio.onended = () => { if (onEnd) onEnd(); };
-                await currentTtsAudio.play();
+                await safePlay(currentTtsAudio);
                 return;
             }
             
@@ -6493,7 +6543,7 @@ type可以是"text"(文字)或"voice_message"(语音)，你自由选择。
             currentTtsAudio.preload = 'auto';
             if (onStart) onStart();
             currentTtsAudio.onended = () => { if (onEnd) onEnd(); };
-            await currentTtsAudio.play();
+            await safePlay(currentTtsAudio);
         }
 
         // 导入助手相关函数
