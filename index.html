@@ -5922,18 +5922,21 @@
         // 照片选择
         function wechatSelectPhoto() {
             closeWechatPlusPanel();
+            currentUploadMode = 'wechat';  // 设置模式，让预览显示在正确位置
             selectImage();
         }
 
         // 拍摄
         function wechatTakePhoto() {
             closeWechatPlusPanel();
+            currentUploadMode = 'wechat';
             capturePhoto();
         }
 
         // 文件选择
         function wechatSelectFile() {
             closeWechatPlusPanel();
+            currentUploadMode = 'wechat';
             selectFile();
         }
 
@@ -6252,7 +6255,14 @@
 	•	例子：好好好……知道了知道了；行行行；啊对对对；等等等等；别急别急。    
 
 【emotion情绪参数】
-必须指定：happy、sad、angry、tender、playful、surprised、neutral`;
+必须指定：happy、sad、angry、tender、playful、surprised、neutral
+
+【特殊互动动作】
+除了voice_message，你还可以在合适的时机使用以下特殊动作（请勿滥用，要符合情境）：
+1. 拍一拍：{"type":"pat","suffix":"可选后缀，如：的小脑袋"}
+   - 使用场景：调侃、撒娇、引起注意、亲昵互动时
+2. 转账：{"type":"transfer","amount":数字,"note":"可选备注"}
+   - 使用场景：发红包、给零花钱、庆祝、关心时`;
             } else {
                 // 普通模式：可以混合文字和语音
                 systemPart += `
@@ -6293,6 +6303,15 @@ type可以是"text"(文字)或"voice_message"(语音)，你自由选择。
 
 【emotion情绪参数】
 必须指定：happy、sad、angry、tender、playful、surprised、neutral
+
+【特殊互动动作】
+除了text和voice_message，你还可以在合适的时机使用以下特殊动作（请勿滥用，要符合情境）：
+1. 拍一拍：{"type":"pat","suffix":"可选后缀，如：的小脑袋"}
+   - 使用场景：调侃、撒娇、引起注意、亲昵互动时
+   - 会显示为："${assistant.name} 拍了拍 用户 的小脑袋"
+2. 转账：{"type":"transfer","amount":数字,"note":"可选备注"}
+   - 使用场景：发红包、给零花钱、庆祝、关心时（如"给你买杯奶茶"）
+   - 金额建议：小额为主(1-200)，符合日常互动
 
 直接输出JSON数组，不要加任何解释。`;
             }
@@ -6392,6 +6411,19 @@ type可以是"text"(文字)或"voice_message"(语音)，你自由选择。
                     }
                     if (msg.type === 'voice_message') {
                         content = `[语音消息] ${content}`;
+                    }
+                    // 拍一拍消息
+                    if (msg.type === 'pat_message') {
+                        fullContent += `[拍一拍] ${content}\n`;
+                        return;
+                    }
+                    // 转账消息
+                    if (msg.type === 'transfer') {
+                        const sender = msg.senderName || (msg.role === 'user' ? '用户' : assistantName);
+                        const receiver = msg.receiverName || (msg.role === 'user' ? assistantName : '用户');
+                        const statusText = msg.status === 'received' ? '已领取' : '待领取';
+                        fullContent += `[转账] ${sender} 向 ${receiver} 转账 ¥${msg.amount}${msg.note ? '，备注: ' + msg.note : ''}（${statusText}）\n`;
+                        return;
                     }
                     fullContent += `${speaker}: ${content}\n`;
                 } catch (e) {
@@ -6566,17 +6598,55 @@ type可以是"text"(文字)或"voice_message"(语音)，你自由选择。
                 replies = [{ type: 'text', content: content }];
             }
 
+            // 获取助手名字
+            const assistant = appData.assistants.find(a => a.id === wechatData.currentAssistantId);
+            const assistantName = assistant?.name || '助手';
+
             // 添加到消息列表，带延迟效果模拟（间隔1.2秒更真实）
             replies.forEach((reply, index) => {
                 setTimeout(() => {
-                    conv.messages.push({
-                        id: 'wmsg_' + Date.now() + '_' + index,
-                        role: 'assistant',
-                        type: reply.type || 'text',
-                        content: reply.content || '',
-                        emotion: reply.emotion || 'neutral',  // 保存情绪参数
-                        timestamp: new Date().toISOString()
-                    });
+                    let msgToAdd;
+
+                    // 处理助手发起的拍一拍
+                    if (reply.type === 'pat') {
+                        const suffix = reply.suffix || '';
+                        let patContent = `${assistantName} 拍了拍 你`;
+                        if (suffix) patContent += ` ${suffix}`;
+                        msgToAdd = {
+                            id: 'wpat_' + Date.now() + '_' + index,
+                            role: 'system',
+                            type: 'pat_message',
+                            content: patContent,
+                            timestamp: new Date().toISOString()
+                        };
+                    }
+                    // 处理助手发起的转账
+                    else if (reply.type === 'transfer') {
+                        msgToAdd = {
+                            id: 'wtrans_' + Date.now() + '_' + index,
+                            role: 'assistant',
+                            type: 'transfer',
+                            senderName: assistantName,
+                            receiverName: '你',
+                            amount: reply.amount || 0,
+                            note: reply.note || '',
+                            status: 'pending',
+                            timestamp: new Date().toISOString()
+                        };
+                    }
+                    // 普通消息（text/voice_message）
+                    else {
+                        msgToAdd = {
+                            id: 'wmsg_' + Date.now() + '_' + index,
+                            role: 'assistant',
+                            type: reply.type || 'text',
+                            content: reply.content || '',
+                            emotion: reply.emotion || 'neutral',
+                            timestamp: new Date().toISOString()
+                        };
+                    }
+
+                    conv.messages.push(msgToAdd);
                     saveWechatData();
                     renderWechatMessages();
                 }, index * 1200);
